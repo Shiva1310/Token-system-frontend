@@ -60,6 +60,24 @@ export function exportToPdf<T>(
       if (!style) return;
 
       const { x, y, width, height } = data.cell;
+
+      // Repaint this cell's own row-stripe background first. We're about to
+      // return false to skip autoTable's default cell draw, which would
+      // otherwise leave this cell plain white while its siblings in the
+      // same row keep their normal zebra-stripe shade -- a visible
+      // mismatched patch around the pill.
+      const rowFill = data.cell.styles.fillColor;
+      if (Array.isArray(rowFill)) {
+        data.doc.setFillColor(rowFill[0], rowFill[1], rowFill[2]);
+      } else if (typeof rowFill === "number") {
+        data.doc.setFillColor(rowFill);
+      } else if (typeof rowFill === "string") {
+        data.doc.setFillColor(rowFill);
+      } else {
+        data.doc.setFillColor(255, 255, 255);
+      }
+      data.doc.rect(x, y, width, height, "F");
+
       const padX = 2.5;
       const padY = 2;
       const pillX = x + padX;
