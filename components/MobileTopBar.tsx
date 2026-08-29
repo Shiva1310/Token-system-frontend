@@ -17,7 +17,7 @@ export function MobileTopBar() {
   if (!user) return null;
 
   return (
-    <div className="flex h-14 items-center justify-between border-b bg-background px-4 md:hidden">
+    <div className="flex h-14 items-center justify-between border-b bg-card px-4 md:hidden">
       <span className="font-semibold">Temple Lottery</span>
       <DropdownMenu>
         <DropdownMenuTrigger render={<button aria-label="Account menu" />}>

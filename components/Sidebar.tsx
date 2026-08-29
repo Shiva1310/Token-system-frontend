@@ -17,7 +17,7 @@ export function Sidebar() {
   const items = navItemsForRole(user.role);
 
   return (
-    <aside className="hidden md:flex md:w-60 md:flex-col md:border-r md:bg-muted/20">
+    <aside className="hidden md:flex md:w-60 md:flex-col md:border-r md:bg-card">
       <div className="flex h-14 items-center border-b px-4">
         <span className="font-semibold">Temple Lottery</span>
       </div>
