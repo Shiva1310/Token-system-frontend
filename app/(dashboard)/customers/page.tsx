@@ -66,6 +66,10 @@ const STATUS_OPTIONS: { value: PaymentStatus; label: string }[] = [
   { value: "exempt", label: "Exempt (winner)" },
 ];
 
+function displayName(customer: Customer): string {
+  return customer.name || `Coupon ${customer.couponNumber}`;
+}
+
 export default function CustomersPage() {
   const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -160,9 +164,9 @@ export default function CustomersPage() {
   }
 
   const exportColumns: ExportColumn<Customer>[] = [
-    { header: "Name", value: (c) => c.name },
-    { header: "Phone", value: (c) => c.phone },
-    { header: "Address", value: (c) => c.address },
+    { header: "Name", value: (c) => displayName(c) },
+    { header: "Phone", value: (c) => c.phone || "-" },
+    { header: "Address", value: (c) => c.address || "-" },
     { header: "Coupon Number", value: (c) => c.couponNumber },
     { header: "Agent", value: (c) => c.agentId?.name ?? "Unknown Agent" },
     ...MONTH_OPTIONS.map((month) => ({
@@ -275,9 +279,13 @@ export default function CustomersPage() {
   );
 
   const columns: DataTableColumn<Customer>[] = [
-    { key: "name", header: "Name", cell: (c) => c.name },
+    { key: "name", header: "Name", cell: (c) => displayName(c) },
     { key: "phone", header: "Phone", cell: (c) => <PhoneLink phone={c.phone} /> },
-    { key: "address", header: "Address", cell: (c) => c.address },
+    {
+      key: "address",
+      header: "Address",
+      cell: (c) => c.address || <span className="text-muted-foreground">-</span>,
+    },
     { key: "coupon", header: "Coupon No.", cell: (c) => c.couponNumber },
     {
       key: "agent",
@@ -411,12 +419,14 @@ export default function CustomersPage() {
               customers.map((customer) => (
                 <EntityCard
                   key={customer._id}
-                  name={customer.name}
+                  name={displayName(customer)}
                   subtitle={<PhoneLink phone={customer.phone} withIcon />}
                   onEdit={() => router.push(`/customers/${customer._id}/edit`)}
                   onDelete={() => setDeleteTarget(customer)}
                 >
-                  <p className="text-sm text-muted-foreground">{customer.address}</p>
+                  {customer.address && (
+                    <p className="text-sm text-muted-foreground">{customer.address}</p>
+                  )}
                   <p className="text-sm">Coupon No: {customer.couponNumber}</p>
                   <p className="text-sm">
                     Agent: {customer.agentId?.name ?? "Unknown Agent"}

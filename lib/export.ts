@@ -26,6 +26,12 @@ export function exportToExcel<T>(
   XLSX.writeFile(workbook, `${filename}.xlsx`);
 }
 
+const STATUS_CELL_STYLES: Record<string, { textColor: [number, number, number]; fillColor: [number, number, number] }> = {
+  paid: { textColor: [21, 128, 61], fillColor: [220, 252, 231] },
+  pending: { textColor: [185, 28, 28], fillColor: [254, 226, 226] },
+  exempt: { textColor: [29, 78, 216], fillColor: [219, 234, 254] },
+};
+
 export function exportToPdf<T>(
   title: string,
   filename: string,
@@ -42,6 +48,17 @@ export function exportToPdf<T>(
     body: rows.map((row) => columns.map((col) => String(col.value(row)))),
     styles: { fontSize: 10, cellPadding: 3 },
     headStyles: { fontSize: 10, fontStyle: "bold", fillColor: [37, 99, 235] },
+    didParseCell: (data) => {
+      if (data.section !== "body") return;
+      const text = data.cell.text.join(" ").trim().toLowerCase();
+      const style = STATUS_CELL_STYLES[text];
+      if (style) {
+        data.cell.styles.textColor = style.textColor;
+        data.cell.styles.fillColor = style.fillColor;
+        data.cell.styles.fontStyle = "bold";
+        data.cell.styles.halign = "center";
+      }
+    },
   });
 
   doc.save(`${filename}.pdf`);

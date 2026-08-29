@@ -112,34 +112,6 @@ export function CustomerForm({ customer }: CustomerFormProps) {
       <CardContent>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="phone">Phone</Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-2 sm:col-span-2">
-            <Label htmlFor="address">Address</Label>
-            <Input
-              id="address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              required
-            />
-          </div>
-          <div className="flex flex-col gap-2">
             <Label htmlFor="agent">Agent</Label>
             <Select
               value={agentId}
@@ -188,6 +160,31 @@ export function CustomerForm({ customer }: CustomerFormProps) {
                 Could not verify coupon number.
               </p>
             )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="name">Name <span className="text-muted-foreground font-normal">(optional)</span></Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="phone">Phone <span className="text-muted-foreground font-normal">(optional)</span></Label>
+            <Input
+              id="phone"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-2 sm:col-span-2">
+            <Label htmlFor="address">Address <span className="text-muted-foreground font-normal">(optional)</span></Label>
+            <Input
+              id="address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+            />
           </div>
           <div className="flex gap-2 sm:col-span-2">
             <Button type="submit" disabled={submitting || couponBlocking}>

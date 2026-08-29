@@ -1,6 +1,10 @@
 import { Phone } from "lucide-react";
 
 export function PhoneLink({ phone, withIcon = false }: { phone: string; withIcon?: boolean }) {
+  if (!phone) {
+    return <span className="text-muted-foreground">-</span>;
+  }
+
   return (
     <a
       href={`tel:${phone}`}
