@@ -9,12 +9,19 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
-import { ApiError, getMe, login as apiLogin, type User } from "@/lib/api";
+import {
+  ApiError,
+  getMe,
+  login as apiLogin,
+  register as apiRegister,
+  type User,
+} from "@/lib/api";
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
   login: (phone: string, password: string) => Promise<User>;
+  register: (name: string, phone: string, password: string) => Promise<User>;
   logout: () => void;
 }
 
@@ -59,6 +66,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return res.user;
   }, []);
 
+  const register = useCallback(
+    async (name: string, phone: string, password: string) => {
+      const res = await apiRegister(name, phone, password);
+      window.localStorage.setItem("token", res.token);
+      setUser(res.user);
+      return res.user;
+    },
+    []
+  );
+
   const logout = useCallback(() => {
     window.localStorage.removeItem("token");
     setUser(null);
@@ -66,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

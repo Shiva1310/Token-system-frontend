@@ -149,6 +149,17 @@ export function getMe(): Promise<User> {
   return apiFetch<User>("/api/auth/me");
 }
 
+export function register(
+  name: string,
+  phone: string,
+  password: string
+): Promise<LoginResponse> {
+  return apiFetch<LoginResponse>("/api/auth/register", {
+    method: "POST",
+    body: JSON.stringify({ name, phone, password }),
+  });
+}
+
 // ---- Dashboard ----
 
 export function getDashboardSummary(): Promise<DashboardSummary> {
