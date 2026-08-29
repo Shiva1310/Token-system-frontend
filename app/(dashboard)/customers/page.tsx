@@ -29,6 +29,7 @@ import { PhoneLink } from "@/components/PhoneLink";
 import { SearchInput } from "@/components/SearchInput";
 import { Fab } from "@/components/Fab";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { AgentCombobox } from "@/components/AgentCombobox";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -66,6 +67,12 @@ const STATUS_OPTIONS: { value: PaymentStatus; label: string }[] = [
   { value: "exempt", label: "Exempt (winner)" },
 ];
 
+const SORT_OPTIONS: { value: string; label: string }[] = [
+  { value: "newest", label: "Newest first" },
+  { value: "asc", label: "Coupon No.: Low to High" },
+  { value: "desc", label: "Coupon No.: High to Low" },
+];
+
 function displayName(customer: Customer): string {
   return customer.name || `Coupon ${customer.couponNumber}`;
 }
@@ -80,6 +87,7 @@ export default function CustomersPage() {
   const [agentFilter, setAgentFilter] = useState(ALL);
   const [monthFilter, setMonthFilter] = useState(ALL);
   const [statusFilter, setStatusFilter] = useState<string>(ALL);
+  const [sortOrder, setSortOrder] = useState<string>("newest");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -109,6 +117,7 @@ export default function CustomersPage() {
       agentId: agentFilter === ALL ? undefined : agentFilter,
       monthIndex: monthFilter === ALL ? undefined : Number(monthFilter),
       status: statusFilter === ALL ? undefined : (statusFilter as PaymentStatus),
+      couponSort: sortOrder === "newest" ? undefined : (sortOrder as "asc" | "desc"),
     };
   }
 
@@ -133,7 +142,7 @@ export default function CustomersPage() {
   useEffect(() => {
     fetchCustomers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, search, agentFilter, monthFilter, statusFilter]);
+  }, [page, search, agentFilter, monthFilter, statusFilter, sortOrder]);
 
   function handleMonthChange(value: string | null) {
     const next = value ?? ALL;
@@ -164,10 +173,10 @@ export default function CustomersPage() {
   }
 
   const exportColumns: ExportColumn<Customer>[] = [
+    { header: "Coupon Number", value: (c) => c.couponNumber },
     { header: "Name", value: (c) => displayName(c) },
     { header: "Phone", value: (c) => c.phone || "-" },
     { header: "Address", value: (c) => c.address || "-" },
-    { header: "Coupon Number", value: (c) => c.couponNumber },
     { header: "Agent", value: (c) => c.agentId?.name ?? "Unknown Agent" },
     ...MONTH_OPTIONS.map((month) => ({
       header: month.label,
@@ -199,31 +208,43 @@ export default function CustomersPage() {
     }
   }
 
-  const hasActiveFilters = agentFilter !== ALL || monthFilter !== ALL || statusFilter !== ALL;
+  const hasActiveFilters =
+    agentFilter !== ALL || monthFilter !== ALL || statusFilter !== ALL || sortOrder !== "newest";
 
   const filterSelects = (
     <>
       <div className="flex flex-col gap-1.5">
         <Label className="text-xs text-muted-foreground">Filter by Agent</Label>
-        <Select
+        <AgentCombobox
+          agents={agents}
           value={agentFilter}
-          onValueChange={(value) => {
-            setAgentFilter(value as string);
+          onChange={(value) => {
+            setAgentFilter(value);
             setPage(1);
           }}
-          items={[
-            { value: ALL, label: "All agents" },
-            ...agents.map((a) => ({ value: a._id, label: a.name })),
-          ]}
+          allOption={{ value: ALL, label: "All agents" }}
+          placeholder="All agents"
+          className="md:w-48"
+        />
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label className="text-xs text-muted-foreground">Sort by Coupon No.</Label>
+        <Select
+          value={sortOrder}
+          onValueChange={(value) => {
+            setSortOrder(value as string);
+            setPage(1);
+          }}
+          items={SORT_OPTIONS}
         >
-          <SelectTrigger className="w-full md:w-48">
-            <SelectValue placeholder="All agents" />
+          <SelectTrigger className="w-full md:w-52">
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={ALL}>All agents</SelectItem>
-            {agents.map((a) => (
-              <SelectItem key={a._id} value={a._id}>
-                {a.name}
+            {SORT_OPTIONS.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                {s.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -279,6 +300,7 @@ export default function CustomersPage() {
   );
 
   const columns: DataTableColumn<Customer>[] = [
+    { key: "coupon", header: "Coupon No.", cell: (c) => c.couponNumber },
     { key: "name", header: "Name", cell: (c) => displayName(c) },
     { key: "phone", header: "Phone", cell: (c) => <PhoneLink phone={c.phone} /> },
     {
@@ -286,7 +308,6 @@ export default function CustomersPage() {
       header: "Address",
       cell: (c) => c.address || <span className="text-muted-foreground">-</span>,
     },
-    { key: "coupon", header: "Coupon No.", cell: (c) => c.couponNumber },
     {
       key: "agent",
       header: "Agent",
@@ -424,10 +445,10 @@ export default function CustomersPage() {
                   onEdit={() => router.push(`/customers/${customer._id}/edit`)}
                   onDelete={() => setDeleteTarget(customer)}
                 >
+                  <p className="text-sm font-medium">Coupon No: {customer.couponNumber}</p>
                   {customer.address && (
                     <p className="text-sm text-muted-foreground">{customer.address}</p>
                   )}
-                  <p className="text-sm">Coupon No: {customer.couponNumber}</p>
                   <p className="text-sm">
                     Agent: {customer.agentId?.name ?? "Unknown Agent"}
                   </p>

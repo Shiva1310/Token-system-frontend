@@ -215,6 +215,7 @@ export function getCustomers(params: {
   agentId?: string;
   monthIndex?: number;
   status?: PaymentStatus;
+  couponSort?: "asc" | "desc";
 }): Promise<PaginatedCustomers> {
   const search = new URLSearchParams();
   if (params.page) search.set("page", String(params.page));
@@ -223,6 +224,7 @@ export function getCustomers(params: {
   if (params.agentId) search.set("agentId", params.agentId);
   if (params.monthIndex) search.set("monthIndex", String(params.monthIndex));
   if (params.status) search.set("status", params.status);
+  if (params.couponSort) search.set("couponSort", params.couponSort);
   const qs = search.toString();
   return apiFetch<PaginatedCustomers>(
     `/api/customers${qs ? `?${qs}` : ""}`

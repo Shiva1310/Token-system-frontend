@@ -16,13 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { AgentCombobox } from "@/components/AgentCombobox";
 
 interface CustomerFormProps {
   customer?: Customer;
@@ -113,32 +107,22 @@ export function CustomerForm({ customer }: CustomerFormProps) {
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-2">
             <Label htmlFor="agent">Agent</Label>
-            <Select
+            <AgentCombobox
+              agents={agents}
               value={agentId}
-              onValueChange={(value) => setAgentId(value as string)}
-              items={agents.map((agent) => ({ value: agent._id, label: agent.name }))}
-            >
-              <SelectTrigger id="agent" className="w-full">
-                <SelectValue
-                  placeholder={agentsLoading ? "Loading agents..." : "Select an agent"}
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {agents.map((agent) => (
-                  <SelectItem key={agent._id} value={agent._id}>
-                    {agent.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={setAgentId}
+              placeholder={agentsLoading ? "Loading agents..." : "Select an agent"}
+            />
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="coupon">Coupon Number</Label>
             <Input
               id="coupon"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={couponNumber}
               onChange={(e) => {
-                setCouponNumber(e.target.value);
+                setCouponNumber(e.target.value.replace(/\D/g, ""));
                 setCouponStatus("idle");
               }}
               onBlur={handleCouponBlur}
