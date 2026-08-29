@@ -15,11 +15,19 @@ export interface LoginResponse {
   user: User;
 }
 
+export interface MonthlyBreakdown {
+  monthIndex: number;
+  label: string;
+  toCollect: number;
+  collected: number;
+}
+
 export interface DashboardSummary {
   totalCustomers: number;
   totalAgents: number;
   totalToCollect: number;
   totalCollected: number;
+  monthlyBreakdown: MonthlyBreakdown[];
 }
 
 export interface Agent {

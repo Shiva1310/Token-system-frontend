@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { getDashboardSummary, type DashboardSummary } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable, type DataTableColumn } from "@/components/DataTable";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users, UserCog, Wallet, PiggyBank, type LucideIcon } from "lucide-react";
 
@@ -22,6 +23,22 @@ interface Stat {
   value: string | number | undefined;
   icon: LucideIcon;
   accent: string;
+}
+
+const MONTH_LABELS = [
+  "Aug 2026",
+  "Sep 2026",
+  "Oct 2026",
+  "Nov 2026",
+  "Dec 2026",
+  "Jan 2027",
+];
+
+interface MonthRow {
+  monthIndex: number;
+  label: string;
+  toCollect: number;
+  collected: number;
 }
 
 export default function DashboardPage() {
@@ -77,6 +94,45 @@ export default function DashboardPage() {
     },
   ];
 
+  const monthRows: MonthRow[] = MONTH_LABELS.map((label, idx) => {
+    const monthIndex = idx + 1;
+    const match = summary?.monthlyBreakdown.find((m) => m.monthIndex === monthIndex);
+    return {
+      monthIndex,
+      label,
+      toCollect: match?.toCollect ?? 0,
+      collected: match?.collected ?? 0,
+    };
+  });
+
+  const monthColumns: DataTableColumn<MonthRow>[] = [
+    { key: "month", header: "Month", cell: (m) => m.label },
+    {
+      key: "toCollect",
+      header: "Amount To Collect",
+      cell: (m) => formatCurrency(m.toCollect),
+    },
+    {
+      key: "collected",
+      header: "Amount Collected",
+      cell: (m) => (
+        <span className="font-medium text-green-700">{formatCurrency(m.collected)}</span>
+      ),
+    },
+    {
+      key: "outstanding",
+      header: "Outstanding",
+      cell: (m) => {
+        const outstanding = m.toCollect - m.collected;
+        return (
+          <span className={outstanding > 0 ? "text-red-600" : "text-muted-foreground"}>
+            {formatCurrency(outstanding)}
+          </span>
+        );
+      },
+    },
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -103,6 +159,18 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      <div className="space-y-2">
+        <h2 className="text-lg font-semibold">Monthly Breakdown</h2>
+        {loading ? (
+          <div className="space-y-2">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : (
+          <DataTable columns={monthColumns} data={monthRows} rowKey={(m) => String(m.monthIndex)} />
+        )}
       </div>
     </div>
   );
