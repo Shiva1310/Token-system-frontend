@@ -1,36 +1,110 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Temple Coupon Lottery — Admin/Staff Dashboard
 
-## Getting Started
+A Next.js (App Router, TypeScript, Tailwind, shadcn/ui) frontend for the temple
+coupon-lottery membership tracker. Customers pay ₹500/month for 6 months via
+coupons; agents recruit customers. This is a pure frontend client — it talks
+to a separately deployed Node/Express backend over a REST API using JWT
+Bearer auth. There is no backend or API route code in this repo.
 
-First, run the development server:
+## Local setup
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+1. Install dependencies:
+
+   ```bash
+   npm install
+   ```
+
+2. Copy the example env file and set the backend URL:
+
+   ```bash
+   cp .env.example .env.local
+   ```
+
+   Edit `.env.local` and set `NEXT_PUBLIC_API_URL` to your backend's URL
+   (e.g. `http://localhost:5000` while developing against a local backend, or
+   your Render backend URL).
+
+3. Run the dev server:
+
+   ```bash
+   npm run dev
+   ```
+
+   Visit http://localhost:3000 — you'll be redirected to `/login`.
+
+## Auth model
+
+The JWT returned by `POST /api/auth/login` is stored in `localStorage` under
+the key `token` and attached to every API request as an `Authorization:
+Bearer <token>` header (see `lib/api.ts`). `lib/auth.tsx` exposes an
+`AuthProvider`/`useAuth()` React context that hydrates the current user via
+`GET /api/auth/me` on load, and clears the session on a 401 response.
+
+### Note on `middleware.ts`
+
+This project intentionally has no `middleware.ts` (or a no-op one). Because
+the JWT lives in `localStorage`, it is not readable from Next.js middleware
+(which runs on the edge/server and only sees cookies). Real route protection
+is therefore done client-side in `app/(dashboard)/layout.tsx`, which redirects
+unauthenticated users to `/login`. The trade-off is that a logged-out user
+briefly reaches the dashboard shell (or its loading skeleton) before being
+redirected, rather than being blocked at the network edge. If stronger
+server-side gating is ever needed, switch to an httpOnly cookie-based session
+issued by the backend and add real middleware.
+
+## Deployment (Vercel)
+
+1. Push this repository to GitHub.
+2. In Vercel, "Import Project" and select the repo.
+3. Framework preset: Next.js (auto-detected).
+4. Set the environment variable `NEXT_PUBLIC_API_URL` to your deployed Render
+   backend URL (e.g. `https://your-backend.onrender.com`).
+5. Deploy.
+
+**A note on the Vercel plan.** The free "Hobby" tier works technically fine
+at this scale — nothing here hits a hard technical limit. However, Hobby's
+Terms of Service are scoped to personal/non-commercial use, and this app
+collects real money on behalf of the temple. It's worth considering upgrading
+to a Pro plan (~$20/month) for a project handling real payments, even though
+nothing in this codebase requires it.
+
+## Project structure
+
+```
+app/
+  layout.tsx                 # Root layout — wraps app in AuthProvider + Toaster
+  page.tsx                   # Redirects to /login
+  login/page.tsx              # Phone + password login form
+  (dashboard)/
+    layout.tsx                 # Client-side auth guard + Sidebar/MobileNav shell
+    dashboard/page.tsx          # Admin-only stat cards
+    agents/                     # Agents list, create, edit
+    customers/                  # Customers list (paginated, searchable), create, edit
+    settings/page.tsx           # Admin-only user management
+lib/
+  api.ts                      # apiFetch() wrapper + typed API helper functions
+  auth.tsx                    # AuthProvider / useAuth()
+  nav.ts                       # Role-filtered nav item definitions
+components/
+  Sidebar.tsx, MobileNav.tsx   # Desktop nav / mobile Sheet drawer nav
+  DataTable.tsx                # Generic table shell
+  PaymentStatusGrid.tsx        # 6-month payment status chips
+  AgentForm.tsx, CustomerForm.tsx
+  ui/                          # shadcn/ui components
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Responsive design
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- The sidebar becomes a `Sheet` drawer below `md`, opened from a hamburger
+  button in a sticky top bar.
+- Tables are wrapped in `overflow-x-auto`; the customers table switches to a
+  stacked card layout below `sm` (`hidden sm:block` / `sm:hidden` pairs).
+- Forms are single-column on mobile and switch to two columns on `sm+`.
+- Dashboard stat cards use a responsive grid (`grid-cols-1 sm:grid-cols-2
+  lg:grid-cols-4`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Build
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run build
+```

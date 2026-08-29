@@ -1,0 +1,186 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { toast } from "sonner";
+import { ApiError, deleteAgent, getAgents, type Agent } from "@/lib/api";
+import { DataTable, type DataTableColumn } from "@/components/DataTable";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Pencil, Trash2 } from "lucide-react";
+
+export default function AgentsPage() {
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<Agent | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  function fetchAgents() {
+    return getAgents()
+      .then(setAgents)
+      .catch((err) => {
+        toast.error(err instanceof ApiError ? err.message : "Failed to load agents");
+      })
+      .finally(() => setLoading(false));
+  }
+
+  function reload() {
+    setLoading(true);
+    fetchAgents();
+  }
+
+  useEffect(() => {
+    fetchAgents();
+     
+  }, []);
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteAgent(deleteTarget._id);
+      toast.success("Agent deleted");
+      setDeleteTarget(null);
+      reload();
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Failed to delete agent");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  const columns: DataTableColumn<Agent>[] = [
+    { key: "name", header: "Name", cell: (a) => a.name },
+    { key: "phone", header: "Phone", cell: (a) => a.phone },
+    {
+      key: "count",
+      header: "Customer Count",
+      cell: (a) => a.customerCount,
+    },
+    {
+      key: "actions",
+      header: "Actions",
+      className: "text-right",
+      cell: (a) => (
+        <div className="flex justify-end gap-2">
+          <Link
+            href={`/agents/${a._id}/edit`}
+            aria-label={`Edit ${a.name}`}
+            className={buttonVariants({ variant: "outline", size: "icon" })}
+          >
+            <Pencil className="size-4" />
+          </Link>
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label={`Delete ${a.name}`}
+            onClick={() => setDeleteTarget(a)}
+          >
+            <Trash2 className="size-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold">Agents</h1>
+          <p className="text-muted-foreground">Manage recruiting agents.</p>
+        </div>
+        <Link href="/agents/new" className={buttonVariants({ variant: "default" })}>
+          New Agent
+        </Link>
+      </div>
+
+      {loading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      ) : (
+        <>
+          <div className="hidden sm:block">
+            <DataTable columns={columns} data={agents} rowKey={(a) => a._id} />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:hidden">
+            {agents.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                No agents found.
+              </p>
+            ) : (
+              agents.map((agent) => (
+                <Card key={agent._id}>
+                  <CardHeader>
+                    <CardTitle className="text-base">{agent.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <p className="text-muted-foreground">{agent.phone}</p>
+                    <p>{agent.customerCount} customers</p>
+                    <div className="flex gap-2 pt-2">
+                      <Link
+                        href={`/agents/${agent._id}/edit`}
+                        className={buttonVariants({
+                          variant: "outline",
+                          size: "sm",
+                          className: "flex-1",
+                        })}
+                      >
+                        Edit
+                      </Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => setDeleteTarget(agent)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </>
+      )}
+
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete agent?</DialogTitle>
+            <DialogDescription>
+              This will permanently delete{" "}
+              <strong>{deleteTarget?.name}</strong>. Any customers currently
+              assigned to this agent will be moved to &quot;Unknown Agent&quot;.
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
