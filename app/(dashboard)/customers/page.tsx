@@ -4,7 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Pencil, Trash2, Download, FileSpreadsheet } from "lucide-react";
+import { Pencil, Trash2, Download, FileSpreadsheet, SlidersHorizontal } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   ApiError,
   deleteCustomer,
@@ -184,6 +191,76 @@ export default function CustomersPage() {
     }
   }
 
+  const hasActiveFilters = agentFilter !== ALL || monthFilter !== ALL || statusFilter !== ALL;
+
+  const filterSelects = (
+    <>
+      <Select
+        value={agentFilter}
+        onValueChange={(value) => {
+          setAgentFilter(value as string);
+          setPage(1);
+        }}
+        items={[
+          { value: ALL, label: "All agents" },
+          ...agents.map((a) => ({ value: a._id, label: a.name })),
+        ]}
+      >
+        <SelectTrigger className="w-full md:w-48">
+          <SelectValue placeholder="All agents" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL}>All agents</SelectItem>
+          {agents.map((a) => (
+            <SelectItem key={a._id} value={a._id}>
+              {a.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={monthFilter}
+        onValueChange={handleMonthChange}
+        items={[{ value: ALL, label: "All months" }, ...MONTH_OPTIONS]}
+      >
+        <SelectTrigger className="w-full md:w-40">
+          <SelectValue placeholder="All months" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL}>All months</SelectItem>
+          {MONTH_OPTIONS.map((m) => (
+            <SelectItem key={m.value} value={m.value}>
+              {m.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select
+        value={statusFilter}
+        onValueChange={(value) => {
+          setStatusFilter(value as string);
+          setPage(1);
+        }}
+        disabled={monthFilter === ALL}
+        items={[{ value: ALL, label: "Any status" }, ...STATUS_OPTIONS]}
+      >
+        <SelectTrigger className="w-full md:w-44">
+          <SelectValue placeholder="Any status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={ALL}>Any status</SelectItem>
+          {STATUS_OPTIONS.map((s) => (
+            <SelectItem key={s.value} value={s.value}>
+              {s.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </>
+  );
+
   const columns: DataTableColumn<Customer>[] = [
     { key: "name", header: "Name", cell: (c) => c.name },
     { key: "phone", header: "Phone", cell: (c) => <PhoneLink phone={c.phone} /> },
@@ -264,77 +341,40 @@ export default function CustomersPage() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 md:flex-row md:flex-wrap">
-        <SearchInput
-          value={searchInput}
-          onChange={setSearchInput}
-          placeholder="Search by name, phone, or coupon number..."
-          className="max-w-sm"
-        />
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-2">
+          <SearchInput
+            value={searchInput}
+            onChange={setSearchInput}
+            placeholder="Search by name, phone, or coupon number..."
+            className="flex-1 md:max-w-sm"
+          />
+          <Sheet>
+            <SheetTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="relative shrink-0 md:hidden"
+                  aria-label="Filters"
+                />
+              }
+            >
+              <SlidersHorizontal className="size-4" />
+              {hasActiveFilters && (
+                <span className="absolute top-1 right-1 size-2 rounded-full bg-primary" />
+              )}
+            </SheetTrigger>
+            <SheetContent side="bottom" className="max-h-[80vh] overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Filters</SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-3 p-4">{filterSelects}</div>
+            </SheetContent>
+          </Sheet>
+        </div>
 
-        <Select
-          value={agentFilter}
-          onValueChange={(value) => {
-            setAgentFilter(value as string);
-            setPage(1);
-          }}
-          items={[
-            { value: ALL, label: "All agents" },
-            ...agents.map((a) => ({ value: a._id, label: a.name })),
-          ]}
-        >
-          <SelectTrigger className="w-full md:w-48">
-            <SelectValue placeholder="All agents" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>All agents</SelectItem>
-            {agents.map((a) => (
-              <SelectItem key={a._id} value={a._id}>
-                {a.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={monthFilter}
-          onValueChange={handleMonthChange}
-          items={[{ value: ALL, label: "All months" }, ...MONTH_OPTIONS]}
-        >
-          <SelectTrigger className="w-full md:w-40">
-            <SelectValue placeholder="All months" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>All months</SelectItem>
-            {MONTH_OPTIONS.map((m) => (
-              <SelectItem key={m.value} value={m.value}>
-                {m.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={statusFilter}
-          onValueChange={(value) => {
-            setStatusFilter(value as string);
-            setPage(1);
-          }}
-          disabled={monthFilter === ALL}
-          items={[{ value: ALL, label: "Any status" }, ...STATUS_OPTIONS]}
-        >
-          <SelectTrigger className="w-full md:w-44">
-            <SelectValue placeholder="Any status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>Any status</SelectItem>
-            {STATUS_OPTIONS.map((s) => (
-              <SelectItem key={s.value} value={s.value}>
-                {s.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="hidden gap-3 md:flex md:flex-wrap">{filterSelects}</div>
       </div>
 
       {loading ? (
