@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { ApiError, deleteAgent, getAgents, type Agent } from "@/lib/api";
+import { exportToExcel, exportToPdf, type ExportColumn } from "@/lib/export";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +17,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Download, FileSpreadsheet } from "lucide-react";
+
+const exportColumns: ExportColumn<Agent>[] = [
+  { header: "Name", value: (a) => a.name },
+  { header: "Phone", value: (a) => a.phone },
+  { header: "Customer Count", value: (a) => a.customerCount },
+];
+
+function PhoneLink({ phone }: { phone: string }) {
+  return (
+    <a href={`tel:${phone}`} className="text-primary hover:underline">
+      {phone}
+    </a>
+  );
+}
 
 export default function AgentsPage() {
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -40,7 +55,7 @@ export default function AgentsPage() {
 
   useEffect(() => {
     fetchAgents();
-     
+
   }, []);
 
   async function handleDelete() {
@@ -58,9 +73,22 @@ export default function AgentsPage() {
     }
   }
 
+  function handleExport(format: "excel" | "pdf") {
+    if (agents.length === 0) {
+      toast.error("No agents to export");
+      return;
+    }
+    if (format === "excel") {
+      exportToExcel("agents", exportColumns, agents);
+    } else {
+      exportToPdf("Agents", "agents", exportColumns, agents);
+    }
+    toast.success(`Exported ${agents.length} agents`);
+  }
+
   const columns: DataTableColumn<Agent>[] = [
     { key: "name", header: "Name", cell: (a) => a.name },
-    { key: "phone", header: "Phone", cell: (a) => a.phone },
+    { key: "phone", header: "Phone", cell: (a) => <PhoneLink phone={a.phone} /> },
     {
       key: "count",
       header: "Customer Count",
@@ -94,14 +122,24 @@ export default function AgentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Agents</h1>
           <p className="text-muted-foreground">Manage recruiting agents.</p>
         </div>
-        <Link href="/agents/new" className={buttonVariants({ variant: "default" })}>
-          New Agent
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => handleExport("excel")}>
+            <FileSpreadsheet className="size-4" />
+            Excel
+          </Button>
+          <Button variant="outline" onClick={() => handleExport("pdf")}>
+            <Download className="size-4" />
+            PDF
+          </Button>
+          <Link href="/agents/new" className={buttonVariants({ variant: "default" })}>
+            New Agent
+          </Link>
+        </div>
       </div>
 
       {loading ? (
@@ -127,7 +165,9 @@ export default function AgentsPage() {
                     <CardTitle className="text-base">{agent.name}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2 text-sm">
-                    <p className="text-muted-foreground">{agent.phone}</p>
+                    <p className="text-muted-foreground">
+                      <PhoneLink phone={agent.phone} />
+                    </p>
                     <p>{agent.customerCount} customers</p>
                     <div className="flex gap-2 pt-2">
                       <Link

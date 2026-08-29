@@ -202,11 +202,17 @@ export function getCustomers(params: {
   page?: number;
   limit?: number;
   search?: string;
+  agentId?: string;
+  monthIndex?: number;
+  status?: PaymentStatus;
 }): Promise<PaginatedCustomers> {
   const search = new URLSearchParams();
   if (params.page) search.set("page", String(params.page));
   if (params.limit) search.set("limit", String(params.limit));
   if (params.search) search.set("search", params.search);
+  if (params.agentId) search.set("agentId", params.agentId);
+  if (params.monthIndex) search.set("monthIndex", String(params.monthIndex));
+  if (params.status) search.set("status", params.status);
   const qs = search.toString();
   return apiFetch<PaginatedCustomers>(
     `/api/customers${qs ? `?${qs}` : ""}`
