@@ -26,10 +26,10 @@ export function exportToExcel<T>(
   XLSX.writeFile(workbook, `${filename}.xlsx`);
 }
 
-const STATUS_CELL_STYLES: Record<string, { textColor: [number, number, number]; fillColor: [number, number, number] }> = {
-  paid: { textColor: [21, 128, 61], fillColor: [220, 252, 231] },
-  pending: { textColor: [185, 28, 28], fillColor: [254, 226, 226] },
-  exempt: { textColor: [29, 78, 216], fillColor: [219, 234, 254] },
+const STATUS_TEXT_COLORS: Record<string, [number, number, number]> = {
+  paid: [21, 128, 61],
+  pending: [185, 28, 28],
+  exempt: [29, 78, 216],
 };
 
 export function exportToPdf<T>(
@@ -48,54 +48,17 @@ export function exportToPdf<T>(
     body: rows.map((row) => columns.map((col) => String(col.value(row)))),
     styles: { fontSize: 10, cellPadding: 3 },
     headStyles: { fontSize: 10, fontStyle: "bold", fillColor: [37, 99, 235] },
-    // Draw status cells as real rounded pill badges (inset within the cell,
-    // with a gap on every side) instead of an edge-to-edge fill -- adjacent
-    // same-status cells were otherwise blending into one solid colored bar.
-    // Returning false skips autoTable's own background/border/text drawing
-    // for this cell so our custom pill is the only thing rendered.
-    willDrawCell: (data) => {
+    // Plain colored, bold, centered text for status cells -- no pill/badge
+    // background, just the wording in color, on the row's normal background.
+    didParseCell: (data) => {
       if (data.section !== "body") return;
-      const label = data.cell.text.join(" ").trim();
-      const style = STATUS_CELL_STYLES[label.toLowerCase()];
-      if (!style) return;
-
-      const { x, y, width, height } = data.cell;
-
-      // Repaint this cell's own row-stripe background first. We're about to
-      // return false to skip autoTable's default cell draw, which would
-      // otherwise leave this cell plain white while its siblings in the
-      // same row keep their normal zebra-stripe shade -- a visible
-      // mismatched patch around the pill.
-      const rowFill = data.cell.styles.fillColor;
-      if (Array.isArray(rowFill)) {
-        data.doc.setFillColor(rowFill[0], rowFill[1], rowFill[2]);
-      } else if (typeof rowFill === "number") {
-        data.doc.setFillColor(rowFill);
-      } else if (typeof rowFill === "string") {
-        data.doc.setFillColor(rowFill);
-      } else {
-        data.doc.setFillColor(255, 255, 255);
+      const text = data.cell.text.join(" ").trim().toLowerCase();
+      const color = STATUS_TEXT_COLORS[text];
+      if (color) {
+        data.cell.styles.textColor = color;
+        data.cell.styles.fontStyle = "bold";
+        data.cell.styles.halign = "center";
       }
-      data.doc.rect(x, y, width, height, "F");
-
-      const padX = 2.5;
-      const padY = 2;
-      const pillX = x + padX;
-      const pillY = y + padY;
-      const pillW = width - padX * 2;
-      const pillH = height - padY * 2;
-      const radius = pillH / 2;
-
-      data.doc.setFillColor(...style.fillColor);
-      data.doc.roundedRect(pillX, pillY, pillW, pillH, radius, radius, "F");
-
-      data.doc.setFont("helvetica", "bold");
-      data.doc.setFontSize(9);
-      data.doc.setTextColor(...style.textColor);
-      const textWidth = data.doc.getTextWidth(label);
-      data.doc.text(label, pillX + pillW / 2 - textWidth / 2, pillY + pillH / 2 + 3);
-
-      return false;
     },
   });
 
