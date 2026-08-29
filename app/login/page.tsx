@@ -49,7 +49,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen w-full items-center justify-center bg-muted/40 px-4">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-xl">Temple Coupon Lottery</CardTitle>
+          <CardTitle className="text-xl">NAM Coupons</CardTitle>
           <CardDescription>Sign in to the admin/staff dashboard</CardDescription>
         </CardHeader>
         <CardContent>

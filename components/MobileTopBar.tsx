@@ -18,7 +18,7 @@ export function MobileTopBar() {
 
   return (
     <div className="flex h-14 items-center justify-between border-b bg-card px-4 md:hidden">
-      <span className="font-semibold">Temple Lottery</span>
+      <span className="font-semibold">NAM Coupons</span>
       <DropdownMenu>
         <DropdownMenuTrigger render={<button aria-label="Account menu" />}>
           <Avatar size="sm">

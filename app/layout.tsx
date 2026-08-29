@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Temple Coupon Lottery",
+  title: "NAM Coupons",
   description: "Admin dashboard for the temple coupon-lottery membership tracker",
 };
 
