@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth";
 import { getDashboardSummary, type DashboardSummary } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Users, UserCog, Wallet, PiggyBank, type LucideIcon } from "lucide-react";
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
@@ -14,6 +15,13 @@ function formatCurrency(amount: number): string {
     currency: "INR",
     maximumFractionDigits: 0,
   }).format(amount);
+}
+
+interface Stat {
+  label: string;
+  value: string | number | undefined;
+  icon: LucideIcon;
+  accent: string;
 }
 
 export default function DashboardPage() {
@@ -42,16 +50,30 @@ export default function DashboardPage() {
     return null;
   }
 
-  const stats = [
-    { label: "Total Customers", value: summary?.totalCustomers },
-    { label: "Total Agents", value: summary?.totalAgents },
+  const stats: Stat[] = [
+    {
+      label: "Total Customers",
+      value: summary?.totalCustomers,
+      icon: Users,
+      accent: "bg-blue-100 text-blue-600",
+    },
+    {
+      label: "Total Agents",
+      value: summary?.totalAgents,
+      icon: UserCog,
+      accent: "bg-purple-100 text-purple-600",
+    },
     {
       label: "Total To Collect",
       value: summary ? formatCurrency(summary.totalToCollect) : undefined,
+      icon: Wallet,
+      accent: "bg-amber-100 text-amber-600",
     },
     {
       label: "Total Collected",
       value: summary ? formatCurrency(summary.totalCollected) : undefined,
+      icon: PiggyBank,
+      accent: "bg-green-100 text-green-600",
     },
   ];
 
@@ -64,10 +86,13 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.label}>
-            <CardHeader className="pb-2">
+            <CardHeader className="flex-row items-start justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.label}
               </CardTitle>
+              <div className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${stat.accent}`}>
+                <stat.icon className="size-4.5" />
+              </div>
             </CardHeader>
             <CardContent>
               {loading ? (

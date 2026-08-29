@@ -13,6 +13,7 @@ import { SearchInput } from "@/components/SearchInput";
 import { Fab } from "@/components/Fab";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -22,7 +23,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Pencil, Trash2, Download, FileSpreadsheet } from "lucide-react";
+import { Pencil, Trash2, Download, FileSpreadsheet, Plus } from "lucide-react";
 
 const exportColumns: ExportColumn<Agent>[] = [
   { header: "Name", value: (a) => a.name },
@@ -40,10 +41,19 @@ function CouponNumbers({ couponNumbers }: { couponNumbers: string[] }) {
   const shown = couponNumbers.slice(0, COUPON_PREVIEW_LIMIT);
   const remaining = couponNumbers.length - shown.length;
   return (
-    <span title={couponNumbers.join(", ")}>
-      {shown.join(", ")}
-      {remaining > 0 && ` +${remaining} more`}
-    </span>
+    <div className="flex flex-wrap items-center gap-1" title={couponNumbers.join(", ")}>
+      {shown.map((coupon) => (
+        <span
+          key={coupon}
+          className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700"
+        >
+          {coupon}
+        </span>
+      ))}
+      {remaining > 0 && (
+        <span className="text-xs text-muted-foreground">+{remaining} more</span>
+      )}
+    </div>
   );
 }
 
@@ -127,25 +137,30 @@ export default function AgentsPage() {
       key: "actions",
       header: "Actions",
       className: "text-right",
-      cell: (a) => (
-        <div className="flex justify-end gap-2">
-          <Link
-            href={`/agents/${a._id}/edit`}
-            aria-label={`Edit ${a.name}`}
-            className={buttonVariants({ variant: "outline", size: "icon" })}
-          >
-            <Pencil className="size-4" />
-          </Link>
-          <Button
-            variant="outline"
-            size="icon"
-            aria-label={`Delete ${a.name}`}
-            onClick={() => setDeleteTarget(a)}
-          >
-            <Trash2 className="size-4" />
-          </Button>
-        </div>
-      ),
+      cell: (a) =>
+        a.isSystem ? (
+          <div className="flex justify-end">
+            <Badge variant="secondary">System</Badge>
+          </div>
+        ) : (
+          <div className="flex justify-end gap-2">
+            <Link
+              href={`/agents/${a._id}/edit`}
+              aria-label={`Edit ${a.name}`}
+              className={buttonVariants({ variant: "outline", size: "icon" })}
+            >
+              <Pencil className="size-4" />
+            </Link>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label={`Delete ${a.name}`}
+              onClick={() => setDeleteTarget(a)}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+        ),
     },
   ];
 
@@ -167,8 +182,9 @@ export default function AgentsPage() {
           </Button>
           <Link
             href="/agents/new"
-            className={buttonVariants({ variant: "default", className: "hidden md:inline-flex" })}
+            className={cn(buttonVariants({ variant: "default" }), "hidden gap-1.5 md:inline-flex")}
           >
+            <Plus className="size-4" />
             New Agent
           </Link>
         </div>
@@ -205,15 +221,24 @@ export default function AgentsPage() {
                   subtitle={<PhoneLink phone={agent.phone} withIcon />}
                   onEdit={() => router.push(`/agents/${agent._id}/edit`)}
                   onDelete={() => setDeleteTarget(agent)}
+                  readOnly={agent.isSystem}
                 >
-                  <Badge variant="secondary">{agent.customerCount} customers</Badge>
-                  <p className="text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">{agent.customerCount} customers</Badge>
+                    {agent.isSystem && <Badge variant="secondary">System</Badge>}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
                     <CouponNumbers couponNumbers={agent.couponNumbers} />
-                  </p>
+                  </div>
                 </EntityCard>
               ))
             )}
           </div>
+          {filteredAgents.length > 0 && (
+            <p className="text-sm text-muted-foreground">
+              Showing {filteredAgents.length} of {agents.length} agents
+            </p>
+          )}
         </>
       )}
 

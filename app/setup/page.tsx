@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Logo } from "@/components/Logo";
 import {
   Card,
   CardContent,
@@ -15,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { User, Phone, Lock } from "lucide-react";
 
 export default function SetupPage() {
   const { register } = useAuth();
@@ -46,7 +48,9 @@ export default function SetupPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-muted/40 px-4">
+    <div className="flex min-h-screen w-full flex-col items-center justify-center gap-8 bg-muted/40 px-4 py-12">
+      <Logo size="lg" />
+
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-xl">Create the first admin account</CardTitle>
@@ -63,43 +67,55 @@ export default function SetupPage() {
               <Button onClick={() => router.replace("/login")}>Go to login</Button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  autoComplete="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
+                <div className="relative">
+                  <User className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="name"
+                    autoComplete="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="pl-9"
+                    required
+                  />
+                </div>
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="phone">Phone number</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  autoComplete="tel"
-                  pattern="[0-9]{10}"
-                  title="10-digit phone number"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
-                />
+                <div className="relative">
+                  <Phone className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    pattern="[0-9]{10}"
+                    title="10-digit phone number"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="pl-9"
+                    required
+                  />
+                </div>
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={8}
-                />
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-9"
+                    required
+                    minLength={8}
+                  />
+                </div>
               </div>
-              <Button type="submit" className="mt-2 w-full" disabled={submitting}>
+              <Button type="submit" className="mt-1 w-full" disabled={submitting}>
                 {submitting ? "Creating..." : "Create admin account"}
               </Button>
             </form>

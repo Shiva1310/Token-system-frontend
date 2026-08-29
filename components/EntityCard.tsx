@@ -14,12 +14,20 @@ import {
 interface EntityCardProps {
   name: string;
   subtitle?: ReactNode;
-  onEdit: () => void;
-  onDelete: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+  readOnly?: boolean;
   children?: ReactNode;
 }
 
-export function EntityCard({ name, subtitle, onEdit, onDelete, children }: EntityCardProps) {
+export function EntityCard({
+  name,
+  subtitle,
+  onEdit,
+  onDelete,
+  readOnly = false,
+  children,
+}: EntityCardProps) {
   return (
     <Card>
       <CardContent className="flex items-start gap-3 p-4">
@@ -31,30 +39,32 @@ export function EntityCard({ name, subtitle, onEdit, onDelete, children }: Entit
         <div className="min-w-0 flex-1 space-y-1.5">
           <div className="flex items-start justify-between gap-2">
             <p className="font-medium leading-tight">{name}</p>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="-mt-1 -mr-2 size-8"
-                    aria-label={`Actions for ${name}`}
-                  />
-                }
-              >
-                <MoreVertical className="size-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onEdit}>
-                  <Pencil className="size-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem variant="destructive" onClick={onDelete}>
-                  <Trash2 className="size-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {!readOnly && (
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="-mt-1 -mr-2 size-8"
+                      aria-label={`Actions for ${name}`}
+                    />
+                  }
+                >
+                  <MoreVertical className="size-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={onEdit}>
+                    <Pencil className="size-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem variant="destructive" onClick={onDelete}>
+                    <Trash2 className="size-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
           {subtitle && <div className="text-sm text-muted-foreground">{subtitle}</div>}
           {children}

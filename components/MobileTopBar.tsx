@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { getInitials, avatarColor } from "@/lib/avatar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Logo } from "@/components/Logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,8 +18,8 @@ export function MobileTopBar() {
   if (!user) return null;
 
   return (
-    <div className="flex h-14 items-center justify-between border-b bg-card px-4 md:hidden">
-      <span className="font-semibold">NAM Coupons</span>
+    <div className="flex h-16 items-center justify-between border-b bg-card px-4 md:hidden">
+      <Logo />
       <DropdownMenu>
         <DropdownMenuTrigger render={<button aria-label="Account menu" />}>
           <Avatar size="sm">

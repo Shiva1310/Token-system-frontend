@@ -11,9 +11,9 @@ import {
 } from "@/lib/api";
 
 const STATUS_STYLES: Record<Payment["status"], string> = {
-  paid: "bg-green-100 text-green-800 border-green-300 hover:bg-green-200",
-  pending: "bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200",
-  exempt: "bg-blue-100 text-blue-800 border-blue-300 cursor-default",
+  paid: "bg-green-100 text-green-700 border-green-200 hover:bg-green-200",
+  pending: "bg-red-50 text-red-600 border-red-200 hover:bg-red-100",
+  exempt: "bg-blue-100 text-blue-700 border-blue-200 cursor-default",
 };
 
 const STATUS_LABELS: Record<Payment["status"], string> = {
@@ -67,7 +67,7 @@ export function MonthPaymentCell({
       onClick={handleToggle}
       title={`${payment.label}: ₹${payment.amountPaid}/₹${payment.amountDue} (${payment.status})`}
       className={cn(
-        "rounded border px-2 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed",
+        "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed",
         STATUS_STYLES[payment.status],
         pending && "opacity-50"
       )}

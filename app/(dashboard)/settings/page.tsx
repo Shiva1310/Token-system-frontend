@@ -23,6 +23,7 @@ import { EntityCard } from "@/components/EntityCard";
 import { PhoneLink } from "@/components/PhoneLink";
 import { SearchInput } from "@/components/SearchInput";
 import { Fab } from "@/components/Fab";
+import { StatusPill } from "@/components/StatusPill";
 import {
   Select,
   SelectContent,
@@ -38,7 +39,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Plus } from "lucide-react";
 
 const ROLE_OPTIONS: { value: Role; label: string }[] = [
   { value: "admin", label: "Admin" },
@@ -195,12 +196,8 @@ export default function SettingsPage() {
     },
     {
       key: "active",
-      header: "Active",
-      cell: (u) => (
-        <Badge variant={u.isActive ? "default" : "outline"}>
-          {u.isActive ? "Active" : "Inactive"}
-        </Badge>
-      ),
+      header: "Status",
+      cell: (u) => <StatusPill active={u.isActive} />,
     },
     {
       key: "actions",
@@ -236,7 +233,8 @@ export default function SettingsPage() {
           <h1 className="text-2xl font-semibold">Settings</h1>
           <p className="text-muted-foreground">Manage admin and staff user accounts.</p>
         </div>
-        <Button onClick={openCreate} className="hidden md:inline-flex">
+        <Button onClick={openCreate} className="hidden gap-1.5 md:inline-flex">
+          <Plus className="size-4" />
           New User
         </Button>
       </div>
@@ -277,9 +275,7 @@ export default function SettingsPage() {
                     <Badge variant="secondary" className="capitalize">
                       {u.role}
                     </Badge>
-                    <Badge variant={u.isActive ? "default" : "outline"}>
-                      {u.isActive ? "Active" : "Inactive"}
-                    </Badge>
+                    <StatusPill active={u.isActive} />
                   </div>
                 </EntityCard>
               ))
