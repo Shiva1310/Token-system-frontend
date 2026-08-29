@@ -28,7 +28,24 @@ const exportColumns: ExportColumn<Agent>[] = [
   { header: "Name", value: (a) => a.name },
   { header: "Phone", value: (a) => a.phone },
   { header: "Customer Count", value: (a) => a.customerCount },
+  { header: "Coupon Numbers", value: (a) => a.couponNumbers.join(", ") || "-" },
 ];
+
+const COUPON_PREVIEW_LIMIT = 5;
+
+function CouponNumbers({ couponNumbers }: { couponNumbers: string[] }) {
+  if (couponNumbers.length === 0) {
+    return <span className="text-muted-foreground">-</span>;
+  }
+  const shown = couponNumbers.slice(0, COUPON_PREVIEW_LIMIT);
+  const remaining = couponNumbers.length - shown.length;
+  return (
+    <span title={couponNumbers.join(", ")}>
+      {shown.join(", ")}
+      {remaining > 0 && ` +${remaining} more`}
+    </span>
+  );
+}
 
 export default function AgentsPage() {
   const router = useRouter();
@@ -100,6 +117,11 @@ export default function AgentsPage() {
       key: "count",
       header: "Customer Count",
       cell: (a) => a.customerCount,
+    },
+    {
+      key: "coupons",
+      header: "Coupon Numbers",
+      cell: (a) => <CouponNumbers couponNumbers={a.couponNumbers} />,
     },
     {
       key: "actions",
@@ -185,6 +207,9 @@ export default function AgentsPage() {
                   onDelete={() => setDeleteTarget(agent)}
                 >
                   <Badge variant="secondary">{agent.customerCount} customers</Badge>
+                  <p className="text-sm text-muted-foreground">
+                    <CouponNumbers couponNumbers={agent.couponNumbers} />
+                  </p>
                 </EntityCard>
               ))
             )}

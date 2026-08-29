@@ -33,15 +33,15 @@ export function exportToPdf<T>(
   rows: T[]
 ) {
   const doc = new jsPDF({ orientation: columns.length > 5 ? "landscape" : "portrait" });
-  doc.setFontSize(14);
+  doc.setFontSize(16);
   doc.text(title, 14, 15);
 
   autoTable(doc, {
-    startY: 20,
+    startY: 22,
     head: [columns.map((col) => col.header)],
     body: rows.map((row) => columns.map((col) => String(col.value(row)))),
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [37, 99, 235] },
+    styles: { fontSize: 10, cellPadding: 3 },
+    headStyles: { fontSize: 10, fontStyle: "bold", fillColor: [37, 99, 235] },
   });
 
   doc.save(`${filename}.pdf`);

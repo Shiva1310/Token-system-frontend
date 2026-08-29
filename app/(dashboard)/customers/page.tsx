@@ -16,7 +16,7 @@ import {
 } from "@/lib/api";
 import { exportToExcel, exportToPdf, type ExportColumn } from "@/lib/export";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
-import { PaymentStatusGrid } from "@/components/PaymentStatusGrid";
+import { PaymentStatusGrid, MonthPaymentCell } from "@/components/PaymentStatusGrid";
 import { EntityCard } from "@/components/EntityCard";
 import { PhoneLink } from "@/components/PhoneLink";
 import { SearchInput } from "@/components/SearchInput";
@@ -188,18 +188,23 @@ export default function CustomersPage() {
     { key: "name", header: "Name", cell: (c) => c.name },
     { key: "phone", header: "Phone", cell: (c) => <PhoneLink phone={c.phone} /> },
     { key: "address", header: "Address", cell: (c) => c.address },
+    { key: "coupon", header: "Coupon No.", cell: (c) => c.couponNumber },
     {
       key: "agent",
       header: "Agent",
       cell: (c) => c.agentId?.name ?? "Unknown Agent",
     },
-    {
-      key: "payments",
-      header: "Payments",
+    ...MONTH_OPTIONS.map((month): DataTableColumn<Customer> => ({
+      key: `month-${month.value}`,
+      header: month.label,
       cell: (c) => (
-        <PaymentStatusGrid customer={c} onUpdated={handlePaymentUpdated} />
+        <MonthPaymentCell
+          customer={c}
+          monthIndex={Number(month.value)}
+          onUpdated={handlePaymentUpdated}
+        />
       ),
-    },
+    })),
     {
       key: "actions",
       header: "Actions",
@@ -358,6 +363,7 @@ export default function CustomersPage() {
                   onDelete={() => setDeleteTarget(customer)}
                 >
                   <p className="text-sm text-muted-foreground">{customer.address}</p>
+                  <p className="text-sm">Coupon No: {customer.couponNumber}</p>
                   <p className="text-sm">
                     Agent: {customer.agentId?.name ?? "Unknown Agent"}
                   </p>

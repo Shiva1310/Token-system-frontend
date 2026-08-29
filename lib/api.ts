@@ -27,6 +27,7 @@ export interface Agent {
   name: string;
   phone: string;
   customerCount: number;
+  couponNumbers: string[];
 }
 
 export type PaymentStatus = "paid" | "pending" | "exempt";
