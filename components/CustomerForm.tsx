@@ -73,6 +73,10 @@ export function CustomerForm({ customer }: CustomerFormProps) {
       return;
     }
     if (couponBlocking) return;
+    if (phone && phone.length !== 10) {
+      toast.error("Phone number must be exactly 10 digits");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -158,9 +162,14 @@ export function CustomerForm({ customer }: CustomerFormProps) {
             <Input
               id="phone"
               type="tel"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
             />
+            {phone.length > 0 && phone.length !== 10 && (
+              <p className="text-xs text-destructive">Phone number must be exactly 10 digits.</p>
+            )}
           </div>
           <div className="flex flex-col gap-2 sm:col-span-2">
             <Label htmlFor="address">Address <span className="text-muted-foreground font-normal">(optional)</span></Label>
