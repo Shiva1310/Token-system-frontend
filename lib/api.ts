@@ -202,6 +202,10 @@ export function getCustomers(params: {
   );
 }
 
+export function getCustomer(id: string): Promise<Customer> {
+  return apiFetch<Customer>(`/api/customers/${id}`);
+}
+
 export interface CustomerInput {
   name: string;
   phone: string;

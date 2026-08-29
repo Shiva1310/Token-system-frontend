@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
-import { ApiError, getCustomers, setCustomerWin, type Customer } from "@/lib/api";
+import { ApiError, getCustomer, setCustomerWin, type Customer } from "@/lib/api";
 import { CustomerForm } from "@/components/CustomerForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -26,15 +26,8 @@ export default function EditCustomerPage() {
   const [savingWin, setSavingWin] = useState(false);
 
   useEffect(() => {
-    // The backend does not expose a get-by-id endpoint for customers, so we
-    // fetch a large page and locate the customer client-side.
-    getCustomers({ page: 1, limit: 1000 })
-      .then((res) => {
-        const found = res.data.find((c) => c._id === params.id);
-        if (!found) {
-          toast.error("Customer not found");
-          return;
-        }
+    getCustomer(params.id)
+      .then((found) => {
         setCustomer(found);
         setWonMonth(found.wonMonth != null ? String(found.wonMonth) : NONE);
       })
