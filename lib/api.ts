@@ -7,7 +7,7 @@ export interface User {
   name: string;
   phone: string;
   role: Role;
-  active?: boolean;
+  isActive?: boolean;
 }
 
 export interface LoginResponse {
@@ -67,7 +67,7 @@ export interface ManagedUser {
   name: string;
   phone: string;
   role: Role;
-  active: boolean;
+  isActive: boolean;
 }
 
 export class ApiError extends Error {
@@ -297,7 +297,7 @@ export interface UserInput {
   phone: string;
   role: Role;
   password?: string;
-  active?: boolean;
+  isActive?: boolean;
 }
 
 export function createUser(data: UserInput): Promise<ManagedUser> {

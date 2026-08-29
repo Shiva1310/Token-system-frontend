@@ -133,7 +133,7 @@ export default function SettingsPage() {
       phone: u.phone,
       role: u.role,
       password: "",
-      active: String(u.active),
+      active: String(u.isActive),
     });
     setFormOpen(true);
   }
@@ -147,7 +147,7 @@ export default function SettingsPage() {
           name: form.name,
           phone: form.phone,
           role: form.role,
-          active: form.active === "true",
+          isActive: form.active === "true",
           ...(form.password ? { password: form.password } : {}),
         });
         toast.success("User updated");
@@ -157,7 +157,7 @@ export default function SettingsPage() {
           phone: form.phone,
           role: form.role,
           password: form.password,
-          active: form.active === "true",
+          isActive: form.active === "true",
         });
         toast.success("User created");
       }
@@ -197,8 +197,8 @@ export default function SettingsPage() {
       key: "active",
       header: "Active",
       cell: (u) => (
-        <Badge variant={u.active ? "default" : "outline"}>
-          {u.active ? "Active" : "Inactive"}
+        <Badge variant={u.isActive ? "default" : "outline"}>
+          {u.isActive ? "Active" : "Inactive"}
         </Badge>
       ),
     },
@@ -277,8 +277,8 @@ export default function SettingsPage() {
                     <Badge variant="secondary" className="capitalize">
                       {u.role}
                     </Badge>
-                    <Badge variant={u.active ? "default" : "outline"}>
-                      {u.active ? "Active" : "Inactive"}
+                    <Badge variant={u.isActive ? "default" : "outline"}>
+                      {u.isActive ? "Active" : "Inactive"}
                     </Badge>
                   </div>
                 </EntityCard>

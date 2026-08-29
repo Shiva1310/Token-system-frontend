@@ -31,13 +31,13 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-md px-3.5 py-3 text-base font-medium transition-colors",
                 active
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
-              <Icon className="size-4" />
+              <Icon className="size-5" />
               {item.label}
             </Link>
           );
