@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -19,6 +19,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
+import { EntityCard } from "@/components/EntityCard";
+import { PhoneLink } from "@/components/PhoneLink";
+import { SearchInput } from "@/components/SearchInput";
+import { Fab } from "@/components/Fab";
 import {
   Select,
   SelectContent,
@@ -68,6 +72,7 @@ export default function SettingsPage() {
 
   const [users, setUsers] = useState<ManagedUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<ManagedUser | null>(null);
@@ -102,6 +107,14 @@ export default function SettingsPage() {
     fetchUsers();
      
   }, [user]);
+
+  const filteredUsers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter(
+      (u) => u.name.toLowerCase().includes(q) || u.phone.toLowerCase().includes(q)
+    );
+  }, [users, search]);
 
   if (!user || user.role !== "admin") {
     return null;
@@ -174,7 +187,7 @@ export default function SettingsPage() {
 
   const columns: DataTableColumn<ManagedUser>[] = [
     { key: "name", header: "Name", cell: (u) => u.name },
-    { key: "phone", header: "Phone", cell: (u) => u.phone },
+    { key: "phone", header: "Phone", cell: (u) => <PhoneLink phone={u.phone} /> },
     {
       key: "role",
       header: "Role",
@@ -218,13 +231,22 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Settings</h1>
           <p className="text-muted-foreground">Manage admin and staff user accounts.</p>
         </div>
-        <Button onClick={openCreate}>New User</Button>
+        <Button onClick={openCreate} className="hidden md:inline-flex">
+          New User
+        </Button>
       </div>
+
+      <SearchInput
+        value={search}
+        onChange={setSearch}
+        placeholder="Search users..."
+        className="max-w-sm"
+      />
 
       {loading ? (
         <div className="space-y-2">
@@ -233,8 +255,40 @@ export default function SettingsPage() {
           <Skeleton className="h-10 w-full" />
         </div>
       ) : (
-        <DataTable columns={columns} data={users} rowKey={(u) => u._id} />
+        <>
+          <div className="hidden md:block">
+            <DataTable columns={columns} data={filteredUsers} rowKey={(u) => u._id} />
+          </div>
+          <div className="grid grid-cols-1 gap-3 md:hidden">
+            {filteredUsers.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                No users found.
+              </p>
+            ) : (
+              filteredUsers.map((u) => (
+                <EntityCard
+                  key={u._id}
+                  name={u.name}
+                  subtitle={<PhoneLink phone={u.phone} withIcon />}
+                  onEdit={() => openEdit(u)}
+                  onDelete={() => setDeleteTarget(u)}
+                >
+                  <div className="flex items-center gap-2 pt-1">
+                    <Badge variant="secondary" className="capitalize">
+                      {u.role}
+                    </Badge>
+                    <Badge variant={u.active ? "default" : "outline"}>
+                      {u.active ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
+                </EntityCard>
+              ))
+            )}
+          </div>
+        </>
       )}
+
+      <Fab label="New user" onClick={openCreate} />
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent>

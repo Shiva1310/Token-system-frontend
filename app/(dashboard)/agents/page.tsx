@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ApiError, deleteAgent, getAgents, type Agent } from "@/lib/api";
 import { exportToExcel, exportToPdf, type ExportColumn } from "@/lib/export";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
+import { EntityCard } from "@/components/EntityCard";
+import { PhoneLink } from "@/components/PhoneLink";
+import { SearchInput } from "@/components/SearchInput";
+import { Fab } from "@/components/Fab";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -25,17 +30,11 @@ const exportColumns: ExportColumn<Agent>[] = [
   { header: "Customer Count", value: (a) => a.customerCount },
 ];
 
-function PhoneLink({ phone }: { phone: string }) {
-  return (
-    <a href={`tel:${phone}`} className="text-primary hover:underline">
-      {phone}
-    </a>
-  );
-}
-
 export default function AgentsPage() {
+  const router = useRouter();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Agent | null>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -58,6 +57,14 @@ export default function AgentsPage() {
 
   }, []);
 
+  const filteredAgents = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return agents;
+    return agents.filter(
+      (a) => a.name.toLowerCase().includes(q) || a.phone.toLowerCase().includes(q)
+    );
+  }, [agents, search]);
+
   async function handleDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -74,16 +81,16 @@ export default function AgentsPage() {
   }
 
   function handleExport(format: "excel" | "pdf") {
-    if (agents.length === 0) {
+    if (filteredAgents.length === 0) {
       toast.error("No agents to export");
       return;
     }
     if (format === "excel") {
-      exportToExcel("agents", exportColumns, agents);
+      exportToExcel("agents", exportColumns, filteredAgents);
     } else {
-      exportToPdf("Agents", "agents", exportColumns, agents);
+      exportToPdf("Agents", "agents", exportColumns, filteredAgents);
     }
-    toast.success(`Exported ${agents.length} agents`);
+    toast.success(`Exported ${filteredAgents.length} agents`);
   }
 
   const columns: DataTableColumn<Agent>[] = [
@@ -122,7 +129,7 @@ export default function AgentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Agents</h1>
           <p className="text-muted-foreground">Manage recruiting agents.</p>
@@ -136,11 +143,21 @@ export default function AgentsPage() {
             <Download className="size-4" />
             PDF
           </Button>
-          <Link href="/agents/new" className={buttonVariants({ variant: "default" })}>
+          <Link
+            href="/agents/new"
+            className={buttonVariants({ variant: "default", className: "hidden md:inline-flex" })}
+          >
             New Agent
           </Link>
         </div>
       </div>
+
+      <SearchInput
+        value={search}
+        onChange={setSearch}
+        placeholder="Search agents..."
+        className="max-w-sm"
+      />
 
       {loading ? (
         <div className="space-y-2">
@@ -150,52 +167,32 @@ export default function AgentsPage() {
         </div>
       ) : (
         <>
-          <div className="hidden sm:block">
-            <DataTable columns={columns} data={agents} rowKey={(a) => a._id} />
+          <div className="hidden md:block">
+            <DataTable columns={columns} data={filteredAgents} rowKey={(a) => a._id} />
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:hidden">
-            {agents.length === 0 ? (
+          <div className="grid grid-cols-1 gap-3 md:hidden">
+            {filteredAgents.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
                 No agents found.
               </p>
             ) : (
-              agents.map((agent) => (
-                <Card key={agent._id}>
-                  <CardHeader>
-                    <CardTitle className="text-base">{agent.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <p className="text-muted-foreground">
-                      <PhoneLink phone={agent.phone} />
-                    </p>
-                    <p>{agent.customerCount} customers</p>
-                    <div className="flex gap-2 pt-2">
-                      <Link
-                        href={`/agents/${agent._id}/edit`}
-                        className={buttonVariants({
-                          variant: "outline",
-                          size: "sm",
-                          className: "flex-1",
-                        })}
-                      >
-                        Edit
-                      </Link>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => setDeleteTarget(agent)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+              filteredAgents.map((agent) => (
+                <EntityCard
+                  key={agent._id}
+                  name={agent.name}
+                  subtitle={<PhoneLink phone={agent.phone} withIcon />}
+                  onEdit={() => router.push(`/agents/${agent._id}/edit`)}
+                  onDelete={() => setDeleteTarget(agent)}
+                >
+                  <Badge variant="secondary">{agent.customerCount} customers</Badge>
+                </EntityCard>
               ))
             )}
           </div>
         </>
       )}
+
+      <Fab href="/agents/new" label="New agent" />
 
       <Dialog
         open={!!deleteTarget}

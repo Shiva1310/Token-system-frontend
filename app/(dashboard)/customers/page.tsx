@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Pencil, Trash2, Download, FileSpreadsheet } from "lucide-react";
 import {
@@ -16,9 +17,11 @@ import {
 import { exportToExcel, exportToPdf, type ExportColumn } from "@/lib/export";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
 import { PaymentStatusGrid } from "@/components/PaymentStatusGrid";
+import { EntityCard } from "@/components/EntityCard";
+import { PhoneLink } from "@/components/PhoneLink";
+import { SearchInput } from "@/components/SearchInput";
+import { Fab } from "@/components/Fab";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
@@ -54,15 +57,8 @@ const STATUS_OPTIONS: { value: PaymentStatus; label: string }[] = [
   { value: "exempt", label: "Exempt (winner)" },
 ];
 
-function PhoneLink({ phone }: { phone: string }) {
-  return (
-    <a href={`tel:${phone}`} className="text-primary hover:underline">
-      {phone}
-    </a>
-  );
-}
-
 export default function CustomersPage() {
+  const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -232,7 +228,7 @@ export default function CustomersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">Customers</h1>
           <p className="text-muted-foreground">Manage members and their payments.</p>
@@ -254,17 +250,20 @@ export default function CustomersPage() {
             <Download className="size-4" />
             PDF
           </Button>
-          <Link href="/customers/new" className={buttonVariants({ variant: "default" })}>
+          <Link
+            href="/customers/new"
+            className={buttonVariants({ variant: "default", className: "hidden md:inline-flex" })}
+          >
             New Customer
           </Link>
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-        <Input
-          placeholder="Search by name, phone, or coupon number..."
+      <div className="flex flex-col gap-3 md:flex-row md:flex-wrap">
+        <SearchInput
           value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
+          onChange={setSearchInput}
+          placeholder="Search by name, phone, or coupon number..."
           className="max-w-sm"
         />
 
@@ -279,7 +278,7 @@ export default function CustomersPage() {
             ...agents.map((a) => ({ value: a._id, label: a.name })),
           ]}
         >
-          <SelectTrigger className="w-full sm:w-48">
+          <SelectTrigger className="w-full md:w-48">
             <SelectValue placeholder="All agents" />
           </SelectTrigger>
           <SelectContent>
@@ -297,7 +296,7 @@ export default function CustomersPage() {
           onValueChange={handleMonthChange}
           items={[{ value: ALL, label: "All months" }, ...MONTH_OPTIONS]}
         >
-          <SelectTrigger className="w-full sm:w-40">
+          <SelectTrigger className="w-full md:w-40">
             <SelectValue placeholder="All months" />
           </SelectTrigger>
           <SelectContent>
@@ -319,7 +318,7 @@ export default function CustomersPage() {
           disabled={monthFilter === ALL}
           items={[{ value: ALL, label: "Any status" }, ...STATUS_OPTIONS]}
         >
-          <SelectTrigger className="w-full sm:w-44">
+          <SelectTrigger className="w-full md:w-44">
             <SelectValue placeholder="Any status" />
           </SelectTrigger>
           <SelectContent>
@@ -341,52 +340,34 @@ export default function CustomersPage() {
         </div>
       ) : (
         <>
-          <div className="hidden sm:block">
+          <div className="hidden md:block">
             <DataTable columns={columns} data={customers} rowKey={(c) => c._id} />
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:hidden">
+          <div className="grid grid-cols-1 gap-3 md:hidden">
             {customers.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
                 No customers found.
               </p>
             ) : (
               customers.map((customer) => (
-                <Card key={customer._id}>
-                  <CardHeader>
-                    <CardTitle className="text-base">{customer.name}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <p className="text-muted-foreground">
-                      <PhoneLink phone={customer.phone} />
-                    </p>
-                    <p className="text-muted-foreground">{customer.address}</p>
-                    <p>Agent: {customer.agentId?.name ?? "Unknown Agent"}</p>
+                <EntityCard
+                  key={customer._id}
+                  name={customer.name}
+                  subtitle={<PhoneLink phone={customer.phone} withIcon />}
+                  onEdit={() => router.push(`/customers/${customer._id}/edit`)}
+                  onDelete={() => setDeleteTarget(customer)}
+                >
+                  <p className="text-sm text-muted-foreground">{customer.address}</p>
+                  <p className="text-sm">
+                    Agent: {customer.agentId?.name ?? "Unknown Agent"}
+                  </p>
+                  <div className="pt-1">
                     <PaymentStatusGrid
                       customer={customer}
                       onUpdated={handlePaymentUpdated}
                     />
-                    <div className="flex gap-2 pt-2">
-                      <Link
-                        href={`/customers/${customer._id}/edit`}
-                        className={buttonVariants({
-                          variant: "outline",
-                          size: "sm",
-                          className: "flex-1",
-                        })}
-                      >
-                        Edit
-                      </Link>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => setDeleteTarget(customer)}
-                      >
-                        Delete
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </EntityCard>
               ))
             )}
           </div>
@@ -416,6 +397,8 @@ export default function CustomersPage() {
           )}
         </>
       )}
+
+      <Fab href="/customers/new" label="New customer" />
 
       <Dialog
         open={!!deleteTarget}
