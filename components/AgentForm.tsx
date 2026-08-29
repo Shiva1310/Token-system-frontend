@@ -31,7 +31,6 @@ export function AgentForm({ agent }: AgentFormProps) {
         toast.success("Agent created");
       }
       router.push("/agents");
-      router.refresh();
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Failed to save agent");
     } finally {

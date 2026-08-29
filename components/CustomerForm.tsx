@@ -97,7 +97,6 @@ export function CustomerForm({ customer }: CustomerFormProps) {
         toast.success("Customer created");
       }
       router.push("/customers");
-      router.refresh();
     } catch (err) {
       toast.error(err instanceof ApiError ? err.message : "Failed to save customer");
     } finally {
