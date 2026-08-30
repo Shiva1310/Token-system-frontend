@@ -182,6 +182,25 @@ export function getAgents(): Promise<Agent[]> {
   return apiFetch<Agent[]>("/api/agents");
 }
 
+export interface PaginatedAgents {
+  data: Agent[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
+
+export function getAgentsPaginated(params: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}): Promise<PaginatedAgents> {
+  const search = new URLSearchParams();
+  search.set("page", String(params.page ?? 1));
+  search.set("limit", String(params.limit ?? 20));
+  if (params.search) search.set("search", params.search);
+  return apiFetch<PaginatedAgents>(`/api/agents?${search.toString()}`);
+}
+
 export function createAgent(data: {
   name: string;
   phone: string;
@@ -209,9 +228,11 @@ export function deleteAgent(id: string): Promise<void> {
 export interface AgentImportResult {
   totalRows: number;
   createdCount: number;
+  updatedCount: number;
   skippedCount: number;
   errorCount: number;
   created: { name: string; phone: string }[];
+  updated: { name: string; oldPhone: string; newPhone: string }[];
   skipped: { name: string; reason: string }[];
   errors: { row: number; name?: string; message: string }[];
 }

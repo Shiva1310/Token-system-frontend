@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ApiError, deleteAgent, getAgents, type Agent } from "@/lib/api";
+import { ApiError, deleteAgent, getAgentsPaginated, type Agent } from "@/lib/api";
 import { exportToExcel, exportToPdf, type ExportColumn } from "@/lib/export";
 import { DataTable, type DataTableColumn } from "@/components/DataTable";
 import { EntityCard } from "@/components/EntityCard";
@@ -25,6 +25,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Pencil, Trash2, Download, FileSpreadsheet, Plus, Ticket } from "lucide-react";
+
+const PAGE_SIZE = 20;
 
 const exportColumns: ExportColumn<Agent>[] = [
   { header: "Name", value: (a) => a.name },
@@ -110,13 +112,30 @@ export default function AgentsPage() {
   const router = useRouter();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [deleteTarget, setDeleteTarget] = useState<Agent | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [exporting, setExporting] = useState(false);
+
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(handle);
+  }, [searchInput]);
 
   function fetchAgents() {
-    return getAgents()
-      .then(setAgents)
+    return getAgentsPaginated({ page, limit: PAGE_SIZE, search })
+      .then((res) => {
+        setAgents(res.data);
+        setTotalPages(res.totalPages || 1);
+        setTotal(res.total || 0);
+      })
       .catch((err) => {
         toast.error(err instanceof ApiError ? err.message : "Failed to load agents");
       })
@@ -130,16 +149,8 @@ export default function AgentsPage() {
 
   useEffect(() => {
     fetchAgents();
-
-  }, []);
-
-  const filteredAgents = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return agents;
-    return agents.filter(
-      (a) => a.name.toLowerCase().includes(q) || a.phone.toLowerCase().includes(q)
-    );
-  }, [agents, search]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, search]);
 
   async function handleDelete() {
     if (!deleteTarget) return;
@@ -156,17 +167,25 @@ export default function AgentsPage() {
     }
   }
 
-  function handleExport(format: "excel" | "pdf") {
-    if (filteredAgents.length === 0) {
-      toast.error("No agents to export");
-      return;
+  async function handleExport(format: "excel" | "pdf") {
+    setExporting(true);
+    try {
+      const res = await getAgentsPaginated({ page: 1, limit: 100000, search });
+      if (res.data.length === 0) {
+        toast.error("No agents to export");
+        return;
+      }
+      if (format === "excel") {
+        exportToExcel("agents", exportColumns, res.data);
+      } else {
+        exportToPdf("Agents", "agents", exportColumns, res.data);
+      }
+      toast.success(`Exported ${res.data.length} agents`);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Export failed");
+    } finally {
+      setExporting(false);
     }
-    if (format === "excel") {
-      exportToExcel("agents", exportColumns, filteredAgents);
-    } else {
-      exportToPdf("Agents", "agents", exportColumns, filteredAgents);
-    }
-    toast.success(`Exported ${filteredAgents.length} agents`);
   }
 
   const columns: DataTableColumn<Agent>[] = [
@@ -222,11 +241,11 @@ export default function AgentsPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <ImportAgentsDialog onImported={reload} />
-          <Button variant="outline" onClick={() => handleExport("excel")}>
+          <Button variant="outline" onClick={() => handleExport("excel")} disabled={exporting}>
             <FileSpreadsheet className="size-4" />
             Excel
           </Button>
-          <Button variant="outline" onClick={() => handleExport("pdf")}>
+          <Button variant="outline" onClick={() => handleExport("pdf")} disabled={exporting}>
             <Download className="size-4" />
             PDF
           </Button>
@@ -241,8 +260,8 @@ export default function AgentsPage() {
       </div>
 
       <SearchInput
-        value={search}
-        onChange={setSearch}
+        value={searchInput}
+        onChange={setSearchInput}
         placeholder="Search agents..."
         className="max-w-sm"
       />
@@ -256,15 +275,15 @@ export default function AgentsPage() {
       ) : (
         <>
           <div className="hidden md:block">
-            <DataTable columns={columns} data={filteredAgents} rowKey={(a) => a._id} />
+            <DataTable columns={columns} data={agents} rowKey={(a) => a._id} />
           </div>
           <div className="grid grid-cols-1 gap-3 md:hidden">
-            {filteredAgents.length === 0 ? (
+            {agents.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
                 No agents found.
               </p>
             ) : (
-              filteredAgents.map((agent) => (
+              agents.map((agent) => (
                 <EntityCard
                   key={agent._id}
                   name={agent.name}
@@ -284,10 +303,35 @@ export default function AgentsPage() {
               ))
             )}
           </div>
-          {filteredAgents.length > 0 && (
+          {agents.length > 0 && (
             <p className="text-sm text-muted-foreground">
-              Showing {filteredAgents.length} of {agents.length} agents
+              Showing {(page - 1) * PAGE_SIZE + 1}-
+              {(page - 1) * PAGE_SIZE + agents.length} of {total} agents
             </p>
+          )}
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {page} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Next
+              </Button>
+            </div>
           )}
         </>
       )}
