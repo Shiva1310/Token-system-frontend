@@ -11,6 +11,7 @@ import { EntityCard } from "@/components/EntityCard";
 import { PhoneLink } from "@/components/PhoneLink";
 import { SearchInput } from "@/components/SearchInput";
 import { Fab } from "@/components/Fab";
+import { ImportAgentsDialog } from "@/components/ImportAgentsDialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -23,7 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Pencil, Trash2, Download, FileSpreadsheet, Plus } from "lucide-react";
+import { Pencil, Trash2, Download, FileSpreadsheet, Plus, Ticket } from "lucide-react";
 
 const exportColumns: ExportColumn<Agent>[] = [
   { header: "Name", value: (a) => a.name },
@@ -32,28 +33,76 @@ const exportColumns: ExportColumn<Agent>[] = [
   { header: "Coupon Numbers", value: (a) => a.couponNumbers.join(", ") || "-" },
 ];
 
-const COUPON_PREVIEW_LIMIT = 5;
+const COUPON_PREVIEW_LIMIT = 4;
 
-function CouponNumbers({ couponNumbers }: { couponNumbers: string[] }) {
+function CouponBadge({ coupon }: { coupon: string }) {
+  return (
+    <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+      {coupon}
+    </span>
+  );
+}
+
+function CouponNumbers({
+  agentName,
+  couponNumbers,
+}: {
+  agentName: string;
+  couponNumbers: string[];
+}) {
+  const [open, setOpen] = useState(false);
+
   if (couponNumbers.length === 0) {
     return <span className="text-muted-foreground">-</span>;
   }
+
   const shown = couponNumbers.slice(0, COUPON_PREVIEW_LIMIT);
   const remaining = couponNumbers.length - shown.length;
+
   return (
-    <div className="flex flex-wrap items-center gap-1" title={couponNumbers.join(", ")}>
-      {shown.map((coupon) => (
-        <span
-          key={coupon}
-          className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700"
-        >
-          {coupon}
-        </span>
-      ))}
-      {remaining > 0 && (
-        <span className="text-xs text-muted-foreground">+{remaining} more</span>
-      )}
-    </div>
+    <>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {shown.map((coupon) => (
+          <CouponBadge key={coupon} coupon={coupon} />
+        ))}
+        {remaining > 0 && (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="inline-flex items-center rounded-full border border-dashed px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            +{remaining} more
+          </button>
+        )}
+      </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Ticket className="size-4.5 text-muted-foreground" />
+              {agentName}
+            </DialogTitle>
+            <DialogDescription>
+              {couponNumbers.length} coupon{couponNumbers.length === 1 ? "" : "s"} assigned to
+              this agent.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-80 overflow-y-auto rounded-lg border bg-muted/20 p-3">
+            <div className="flex flex-wrap gap-1.5">
+              {couponNumbers.map((coupon) => (
+                <CouponBadge key={coupon} coupon={coupon} />
+              ))}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -131,7 +180,7 @@ export default function AgentsPage() {
     {
       key: "coupons",
       header: "Coupon Numbers",
-      cell: (a) => <CouponNumbers couponNumbers={a.couponNumbers} />,
+      cell: (a) => <CouponNumbers agentName={a.name} couponNumbers={a.couponNumbers} />,
     },
     {
       key: "actions",
@@ -172,6 +221,7 @@ export default function AgentsPage() {
           <p className="text-muted-foreground">Manage recruiting agents.</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <ImportAgentsDialog onImported={reload} />
           <Button variant="outline" onClick={() => handleExport("excel")}>
             <FileSpreadsheet className="size-4" />
             Excel
@@ -228,7 +278,7 @@ export default function AgentsPage() {
                     {agent.isSystem && <Badge variant="secondary">System</Badge>}
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    <CouponNumbers couponNumbers={agent.couponNumbers} />
+                    <CouponNumbers agentName={agent.name} couponNumbers={agent.couponNumbers} />
                   </div>
                 </EntityCard>
               ))

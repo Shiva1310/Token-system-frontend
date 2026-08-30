@@ -206,6 +206,54 @@ export function deleteAgent(id: string): Promise<void> {
   return apiFetch<void>(`/api/agents/${id}`, { method: "DELETE" });
 }
 
+export interface AgentImportResult {
+  totalRows: number;
+  createdCount: number;
+  skippedCount: number;
+  errorCount: number;
+  created: { name: string; phone: string }[];
+  skipped: { name: string; reason: string }[];
+  errors: { row: number; name?: string; message: string }[];
+}
+
+export async function importAgents(file: File): Promise<AgentImportResult> {
+  const base = getBaseUrl();
+  const token = getToken();
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${base}/api/agents/import`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  let body: unknown = null;
+  const text = await res.text();
+  if (text) {
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = null;
+    }
+  }
+
+  if (!res.ok) {
+    const message =
+      (body as { message?: string } | null)?.message ??
+      `Request failed with status ${res.status}`;
+    throw new ApiError(message, res.status);
+  }
+
+  return body as AgentImportResult;
+}
+
 // ---- Customers ----
 
 export function getCustomers(params: {
